@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
-import userRoutes from './user.routes';
-import testeTelegramRoutes from './testeTelegram.routes';
-import authRoutes from './auth.routes';
+import userRoutes from './user.routes.js';
+import testeTelegramRoutes from './testeTelegram.routes.js';
+import authRoutes from './auth.routes.js';
 
 const router = Router();
 
