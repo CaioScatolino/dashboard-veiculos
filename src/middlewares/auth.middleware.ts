@@ -11,27 +11,37 @@ interface JWTPayload {
   exp: number;
 }
 
+// 🌟 Utilitário de alta performance para ler o cookie sem pacotes de terceiros
+const getCookie = (
+  cookieHeader: string | undefined,
+  name: string,
+): string | null => {
+  if (!cookieHeader) return null;
+  const match = cookieHeader.match(new RegExp("(^|;\\s*)" + name + "=([^;]*)"));
+  return match ? decodeURIComponent(match[2]) : null;
+};
+
 export const authMiddleware = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-  // 1. Obter o header Authorization
-  const authHeader = req.headers.authorization;
+  // 1. Tenta obter o token do Cookie do navegador
+  let token = getCookie(req.headers.cookie, "token");
 
-  if (!authHeader) {
-    return res.status(401).json({ error: "Token não fornecido." });
+  // Fallback: Se não estiver no cookie (ex: Postman/Insomnia), busca no header Authorization
+  if (!token && req.headers.authorization) {
+    const parts = req.headers.authorization.split(" ");
+    if (parts.length === 2 && /^Bearer$/i.test(parts[0])) {
+      token = parts[1];
+    }
   }
 
-  // O padrão é "Bearer <TOKEN>"
-  const parts = authHeader.split(" ");
-  if (parts.length !== 2) {
-    return res.status(401).json({ error: "Token mal formatado." });
-  }
-
-  const [scheme, token] = parts;
-  if (!/^Bearer$/i.test(scheme)) {
-    return res.status(401).json({ error: "Token sem o prefixo Bearer." });
+  // Se não encontrar o token em nenhum dos dois lados, barra o acesso
+  if (!token) {
+    return res
+      .status(401)
+      .json({ error: "Acesso negado. Token não fornecido." });
   }
 
   try {
@@ -40,7 +50,6 @@ export const authMiddleware = async (
     const decoded = jwt.verify(token, jwtSecret) as JWTPayload;
 
     // 3. Verificar se o usuário existe e a sessão está ativa no banco
-    // Nota: O telegramId no banco foi tipado como number no Drizzle (bigint)
     const userExists = await db
       .select()
       .from(users)
@@ -50,7 +59,7 @@ export const authMiddleware = async (
     if (userExists.length === 0) {
       return res
         .status(401)
-        .json({ error: "Usuário não encontrado ou sessão inativa." });
+        .json({ error: "Usuário não encontrado ou sessão inativa no banco." });
     }
 
     const loggedUser = userExists[0];
