@@ -14,7 +14,7 @@ router.get("/", (req: Request, res: Response) => {
             <script async src="https://telegram.org/js/telegram-widget.js?22" 
                     data-telegram-login="meu_alerta_promocoes_jogos_bot" 
                     data-size="large" 
-                    data-auth-url="http://localhost:3003/api/auth/telegram/callback">
+                    data-auth-url="${process.env.BASE_URL}/api/auth/telegram/callback">
             </script>
         </body>
         </html>
