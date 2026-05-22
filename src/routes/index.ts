@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import userRoutes from './user.routes.js';
+import userRoutes from './users.routes.js';
 import testeTelegramRoutes from './testeTelegram.routes.js';
 import authRoutes from './auth.routes.js';
 import { authMiddleware } from '../middlewares/auth.middleware.js';
